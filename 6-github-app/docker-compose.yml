@@ -10,12 +10,12 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:13.2
+    image: grafana/grafana:nightly
     pull_policy: always
     container_name: grafana-github-app
     environment:
       - GF_FEATURE_TOGGLES_ENABLE=provisioning,kubernetesDashboards
-      - GF_SERVER_PUBLIC_ROOT_URL=${NGROK_SUBDOMAIN}
+      - GF_PROVISIONING_PUBLIC_ROOT_URL=${NGROK_SUBDOMAIN}
       # Used when Grafana creates the initial admin account.
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
