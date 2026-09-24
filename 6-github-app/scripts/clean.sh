@@ -9,7 +9,7 @@ cleanup_failed=false
 # Delete the referencing repository before deleting its connection.
 for resource in repositories/git-sync-github-app connections/github-app; do
     printf 'Removing %s...\n' "$resource"
-    if ! gcx --config="$SCENARIO_DIR/gcx.yaml" --context=default resources delete "$resource" --yes --on-error abort; then
+    if ! gcx --config="$SCENARIO_DIR/gcx.yaml" --context=localhost resources delete "$resource" --yes --on-error abort; then
         printf 'Could not remove %s; it may already be absent or Grafana may be stopped. See the error above.\n' "$resource" >&2
         cleanup_failed=true
     fi

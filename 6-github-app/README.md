@@ -1,6 +1,8 @@
 # Scenario 6: GitHub App with mise and gcx
 
-Single Grafana instance with Git Sync authenticated through a GitHub App. This scenario runs Grafana and ngrok with 17 dashboards across applications, business, infrastructure, and security, using mise tasks and your existing gcx installation.
+Single Grafana instance with Git Sync authenticated through a GitHub App. This scenario runs Grafana 13.2 and ngrok with 18 dashboards across applications, business, infrastructure, and security, using mise tasks and your existing gcx installation.
+
+Browse the [dashboard catalog](grafana/README.md) for the architecture diagram and links to every dashboard and its JSON definition.
 
 ## Architecture
 
@@ -53,7 +55,7 @@ If you already have an app, check its permissions and repository installation ag
 
 ## Configure the environment
 
-Use the shared repository-root `.env`. If you do not already have one, copy `.env.example` to `.env` from the repository root. If it already exists, add the app variables without replacing your existing settings.
+Use the shared repository-root `.env`. If you do not already have one, copy `.env.example` to `.env` from the repository root. If it already exists, add the app variables without replacing your existing settings. mise loads `../.env` through the `[env]` configuration for all scenario tasks.
 
 ```dotenv
 NGROK_AUTHTOKEN=your_ngrok_authtoken
@@ -62,12 +64,32 @@ GITHUB_REPO=https://github.com/your_username/campfire-using-git-sync-demo
 GITHUB_BRANCH=main
 GITHUB_APP_ID=123456
 GITHUB_APP_INSTALLATION_ID=12345678
-GITHUB_APP_PRIVATE_KEY_FILE="/absolute/path/outside/the/repository/github-app.pem"
+GITHUB_APP_PRIVATE_KEY=base64_encoded_pem_contents
 ```
 
-`GITHUB_APP_PRIVATE_KEY_FILE` must be an absolute path to a readable PEM file; quote it if the path contains spaces. Keep the PEM contents in that file. `GITHUB_PAT` may remain configured for other scenarios, but this scenario does not use it.
+`GITHUB_APP_PRIVATE_KEY` contains the base64-encoded contents of the downloaded PEM file, as required by [Grafana 13.2's GitHub App validation](https://github.com/grafana/grafana/blob/v13.2.0/apps/provisioning/pkg/connection/github/validator.go). Generate a single-line value locally, then paste it into the gitignored `.env`:
+
+```bash
+base64 < "/absolute/path/outside/the/repository/github-app.pem" | tr -d '\r\n'
+```
+
+Keep the original PEM outside the repository and the encoded value in `.env`. `setup-resources` substitutes that value into `connection.yaml`; it does not read or encode a PEM file itself. `GITHUB_PAT` may remain configured for other scenarios, but this scenario does not use it.
 
 The configured remote branch must already contain `6-github-app/grafana/`. Commit and push the new scenario to your fork, or select a branch where it is already present, before configuring Git Sync.
+
+## Configure gcx contexts
+
+`setup-resources` selects `localhost` in your normal gcx configuration, using gcx's [configuration lookup rules](https://github.com/grafana/gcx/blob/v0.2.15/docs/reference/cli/gcx_config.md). It does not pass the scenario's `gcx.yaml` as `--config`. Configure `localhost` to target `http://localhost:3000`, organization 1, with `admin` / `admin` basic authentication.
+
+The current tasks select their configuration as follows:
+
+| Task | Configuration | Context |
+| --- | --- | --- |
+| `setup-resources` | Normal gcx configuration, including `GCX_CONFIG` if set | `localhost` |
+| `setup-users` | This scenario's `gcx.yaml` | Its current context, initially `default` |
+| `clean` | This scenario's `gcx.yaml` | `localhost` |
+
+The supplied `gcx.yaml` defines only `default`. Before using `clean`, add a `localhost` context with the same Grafana connection settings to that file. Ensure the contexts used by all three tasks point to the same instance and organization.
 
 ## Quick start
 
@@ -78,18 +100,26 @@ cd 6-github-app
 mise trust
 
 mise run start
-mise run setup-git-sync
+mise run health
+```
+
+Once Grafana is healthy, continue from the same directory:
+
+```bash
+mise run setup-resources
 mise run ngrok-url
 mise run open
 ```
 
 Login at `http://localhost:3000` with `admin` / `admin`.
 
-`start` starts the containers. `setup-git-sync` separately loads the shared `.env`, validates the required app inputs, and waits up to 60 seconds for Grafana health. It renders `connection.yaml` and `repository.yaml` into private temporary files and pushes the Connection before the Repository with gcx. Temporary files are removed when setup exits, including after an error or interrupt.
+`start` starts the containers. `setup-resources` runs directly from `mise.toml`: it renders `connection.yaml` and `repository.yaml` with `envsubst` into temporary YAML files, then pushes the Connection before the Repository with gcx. A failed command stops the task. It does not validate required environment values or wait for Grafana readiness, so fill the variables above and wait for a healthy instance before running it.
 
-If you previously started this scenario with the image renderer, run `mise run start` to apply the updated services and remove the old renderer container. Run `mise run setup-git-sync` again to apply the disabled dashboard preview setting to an existing Git Sync repository.
+`mise run ngrok-url` prints `NGROK_SUBDOMAIN` from the environment loaded by mise. It reports an error if the value is empty or missing. Use `mise run logs-ngrok` or `mise run health` to check the tunnel; the URL task only displays the configured address.
 
-The YAML files are templates: use the setup task to supply the credentials and repository settings. The script uses the local `gcx.yaml` and `default` context explicitly. It does not need an interactive gcx login or a context switch.
+If you previously started this scenario with the image renderer, run `mise run start` to apply the updated services and remove the old renderer container. Run `mise run setup-resources` again to apply the disabled dashboard preview setting to an existing Git Sync repository.
+
+The YAML files are templates; `setup-resources` supplies their environment values. The current task has incomplete temporary-file cleanup: its second `EXIT` trap replaces the first, leaving the rendered Connection file and the initial `mktemp` files behind. The Connection file contains the encoded private key. Remove those files from the system temporary directory after use; `mise run clean` does not remove them.
 
 ## Admin account and email
 
@@ -124,28 +154,28 @@ mise run start
 mise run setup-users
 ```
 
-The task loads the root `.env` when present, then uses `gcx api` with the local `gcx.yaml` and `default` context. It requires the configured account's actual Grafana server administrator privileges and basic authentication. New users are created through the [Admin API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/admin/#global-users); profiles and membership are managed through the [User API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/user/) and [Organization API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/org/).
+mise loads the root `.env`, then the helper uses `gcx api` with the local `gcx.yaml`. The helper passes no explicit context, so it uses the configured current context (`default` in the supplied file, unless overridden through gcx configuration). It requires the configured account's actual Grafana server administrator privileges and basic authentication. New users are created through the [Admin API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/admin/#global-users); profiles and membership are managed through the [User API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/user/) and [Organization API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/org/).
 
 Each run matches existing usernames, updates their names and emails, and applies the requested role in organization 1. Passwords are required only for new accounts; existing passwords are never reset. `Admin` means organization Admin. The task refuses to manage server administrators or the account authenticating the requests, and it never deletes users. Removing an entry from the file leaves that account in Grafana.
 
-Definitions, email conflicts, and required creation passwords are checked before any writes. Passwords are passed to gcx through standard input, without temporary credential files. API errors stop the task with a nonzero exit status; successful earlier changes remain, and rerunning finishes the setup. If Grafana is still starting, retry after it is healthy. These settings are applied when the task runs; there is no continuous user synchronization. `setup-users` is separate from `start` and `setup-git-sync`.
+Definitions, email conflicts, and required creation passwords are checked before any writes. Passwords are passed to gcx through standard input, without temporary credential files. API errors stop the task with a nonzero exit status; successful earlier changes remain, and rerunning finishes the setup. If Grafana is still starting, retry after it is healthy. These settings are applied when the task runs; there is no continuous user synchronization. `setup-users` is separate from `start` and `setup-resources`.
 
 ## Tasks
 
-Every task corresponding to Scenario 1's Make targets is available through `mise run`:
+Run these tasks from `6-github-app` through `mise run`:
 
 | Command | Purpose |
 | --- | --- |
 | `mise run help` | List tasks |
 | `mise run start` | Start services |
-| `mise run setup-git-sync` | Create or update the app connection and Git Sync repository |
+| `mise run setup-resources` | Render and push the app connection and Git Sync repository |
 | `mise run setup-users` | Create or update the users and organization roles in `users.json` |
 | `mise run stop` | Stop services, retaining their data volume |
 | `mise run restart` | Restart services |
 | `mise run logs` | Follow all service logs |
 | `mise run logs-grafana` | Follow Grafana logs |
 | `mise run logs-ngrok` | Show ngrok logs |
-| `mise run ngrok-url` | Show the public tunnel URL |
+| `mise run ngrok-url` | Print `NGROK_SUBDOMAIN` loaded from `.env` |
 | `mise run open` | Open Grafana |
 | `mise run open-ngrok` | Open the ngrok dashboard |
 | `mise run open-all` | Open both dashboards |
@@ -153,17 +183,17 @@ Every task corresponding to Scenario 1's Make targets is available through `mise
 | `mise run status` | Show service status |
 | `mise run clean` | Remove this scenario's Git Sync resources, containers, and volumes |
 
-`clean` requests deletion of `repositories/git-sync-github-app` followed by `connections/github-app`, then runs Docker Compose teardown with volume removal. Cleanup errors remain visible, and Docker teardown still runs if Grafana is already stopped or the resources are absent. This does not uninstall the GitHub App or remove its private key file.
+`clean` requests deletion of `repositories/git-sync-github-app` followed by `connections/github-app`, then runs Docker Compose teardown with volume removal. It uses `--config=gcx.yaml --context=localhost`; see [Configure gcx contexts](#configure-gcx-contexts). Cleanup errors remain visible, and Docker teardown still runs if Grafana is already stopped or the resources are absent. The task does not uninstall the GitHub App or remove the root `.env`, original PEM, or setup task's leftover temporary files.
 
 ## Inspect Git Sync
 
-From this scenario directory:
+To inspect the same context used by `setup-resources`, run from this scenario directory:
 
 ```bash
-gcx --config=gcx.yaml --context=default config list-contexts
-gcx --config=gcx.yaml --context=default resources get connections/github-app
-gcx --config=gcx.yaml --context=default resources get repositories/git-sync-github-app
-gcx --config=gcx.yaml --context=default resources get dashboards
+gcx config list-contexts
+gcx --context=localhost resources get connections/github-app
+gcx --context=localhost resources get repositories/git-sync-github-app
+gcx --context=localhost resources get dashboards
 ```
 
 In Grafana, open **Administration → Provisioning → Git Sync** to inspect connection and synchronization status. Dashboards are imported from `6-github-app/grafana/` into a folder named **Git Sync GitHub App**, with a 60-second sync interval.
@@ -179,11 +209,12 @@ Once configured, you can edit dashboards in Grafana or Git, write directly to th
 - **mise shell configuration warning:** The scenario uses `[settings].unix_default_inline_shell_args`, which is supported by mise 2026.3.9. That version does not support `[task_config].shell`.
 - **gcx not found:** Ensure the directory containing your installed gcx executable is on your PATH before running mise. This scenario does not declare a gcx tool dependency or download it from GitHub.
 - **User setup errors:** Ensure Python 3 is installed, Grafana is ready, and `gcx.yaml` contains working server administrator credentials. Set the password variables named in `users.json` for accounts that do not yet exist. Reruns preserve existing passwords.
-- **Missing app inputs:** Add the three `GITHUB_APP_*` variables to the root `.env`. Use the numeric App ID and installation ID, and a readable absolute PEM path.
+- **Missing app inputs:** Set `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, and `GITHUB_APP_PRIVATE_KEY` in the root `.env`. Use numeric IDs and the base64-encoded PEM contents. `envsubst` leaves an empty value for an unset variable; the task has no separate input validation.
+- **Context not found:** `setup-resources` requires `localhost` in your normal gcx configuration; `clean` requires it in this scenario's `gcx.yaml`. The supplied local file defines only `default`. Follow [Configure gcx contexts](#configure-gcx-contexts).
 - **Connection or repository errors:** Check that the app is installed on the selected repository with the permissions listed above. Inspect the resources with gcx and read `mise run logs-grafana`.
-- **Grafana health timeout:** Check `mise run status` and `mise run logs-grafana`, then retry setup once Grafana is healthy.
+- **Grafana still starting:** Check `mise run health`, `mise run status`, and `mise run logs-grafana`, then run `mise run setup-resources` once Grafana is healthy. The setup task has no readiness wait.
 - **No dashboards:** Confirm that the selected remote branch contains `6-github-app/grafana/`, and inspect Git Sync status. Local unpushed files are not synchronized.
-- **Ngrok:** Check `mise run logs-ngrok` and `mise run ngrok-url`. The public URL in `NGROK_SUBDOMAIN` must match your static ngrok domain.
+- **Ngrok:** `mise run ngrok-url` displays the configured address; use `mise run logs-ngrok` to inspect tunnel activity. `NGROK_SUBDOMAIN` must contain your full static HTTPS URL.
 - **Ports already in use:** Stop the other scenario before starting this one.
 
 ## References

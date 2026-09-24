@@ -15,7 +15,7 @@ services:
     container_name: grafana-github-app
     environment:
       - GF_FEATURE_TOGGLES_ENABLE=provisioning,kubernetesDashboards
-      - GF_SERVER_ROOT_URL=${NGROK_SUBDOMAIN}
+      - GF_SERVER_PUBLIC_ROOT_URL=${NGROK_SUBDOMAIN}
       # Used when Grafana creates the initial admin account.
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin

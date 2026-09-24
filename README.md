@@ -1,6 +1,6 @@
 # Grafana Git Sync Demo Repository
 
-> **Last Updated:** September 24, 2026
+> **Last Updated:** September 25, 2026
 >
 > **Purpose:** This repository provides practical demonstrations of Grafana's Git Sync feature through six real-world scenarios. It's designed to help DevOps engineers, SREs, and Grafana users learn how to implement bidirectional synchronization between Grafana dashboards and Git repositories.
 
@@ -48,7 +48,7 @@ Single Grafana instance with multiple Git Sync repositories for different teams.
 
 ### Scenario 6: GitHub App with mise and gcx
 
-Single Grafana instance with ngrok, GitHub App authentication, mise tasks, and your existing gcx installation, with 17 dashboards across applications, business, infrastructure, and security. Dashboard image previews are disabled.
+Single Grafana instance with ngrok, GitHub App authentication, mise tasks, and your existing gcx installation, with 18 dashboards across applications, business, infrastructure, and security. Dashboard image previews are disabled.
 
 [→ Scenario 6 Guide](6-github-app/README.md)
 
@@ -83,7 +83,7 @@ Edit `.env` and configure:
 - `GITHUB_REPO`: Your forked repository's full URL (e.g., `https://github.com/yourusername/campfire-using-git-sync-demo`)
 - `GITHUB_BRANCH`: Branch to sync (usually `main`)
 
-Scenario 6 also uses `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, and `GITHUB_APP_PRIVATE_KEY_FILE`, an absolute path to a PEM key stored outside this repository. It does not require `GITHUB_PAT`.
+Scenario 6 also uses `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, and `GITHUB_APP_PRIVATE_KEY` (the base64-encoded PEM contents). Store these in the root, gitignored `.env`, which mise loads for its tasks. See [Configure the environment](6-github-app/README.md#configure-the-environment) for key preparation. Scenario 6 does not require `GITHUB_PAT`.
 
 ### 3. Choose and Start a Scenario
 
@@ -133,7 +133,7 @@ make stop          # Stop services
 make clean         # Remove all containers and volumes
 ```
 
-Scenario 6 provides the same task names through `mise run`, for example `mise run start`, `mise run setup-git-sync`, and `mise run clean`. It also provides `mise run setup-users` to create the demo editor and viewer accounts using gcx (requires Python 3). See its [task reference](6-github-app/README.md#tasks).
+Scenario 6 uses `mise run start`, followed by `mise run setup-resources` once Grafana is healthy. `setup-resources` renders the Connection and Repository templates with `envsubst` and pushes them with gcx. `mise run ngrok-url` prints the configured `NGROK_SUBDOMAIN`; `mise run setup-users` manages the demo editor and viewer accounts (requires Python 3). See its [task reference](6-github-app/README.md#tasks), including `mise run clean` for teardown.
 
 ## Git Sync Workflow
 
@@ -169,7 +169,7 @@ Scenario 6 provides the same task names through `mise run`, for example `mise ru
 
 ## Using grafanactl
 
-Scenarios 1–5 include a `grafanactl.yaml` configuration file for CLI management. Scenario 6 uses its own `gcx.yaml`; see [Inspect Git Sync](6-github-app/README.md#inspect-git-sync) for the gcx commands. To use grafanactl:
+Scenarios 1–5 include a `grafanactl.yaml` configuration file for CLI management. Scenario 6 uses gcx; see [Configure gcx contexts](6-github-app/README.md#configure-gcx-contexts) for the configuration used by each task and [Inspect Git Sync](6-github-app/README.md#inspect-git-sync) for commands. To use grafanactl:
 
 ### Installation
 

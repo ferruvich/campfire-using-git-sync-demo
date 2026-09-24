@@ -1,5 +1,8 @@
 # Tasks use the gcx installation already available on PATH.
 
+[env]
+_.file = { path = "../.env" }
+
 [settings]
 unix_default_inline_shell_args = "bash -e -u -o pipefail -c"
 
@@ -16,22 +19,25 @@ sleep 5
 echo ""
 echo "Grafana: http://localhost:3000 (admin / admin)"
 echo "Ngrok: run 'mise run ngrok-url' to get the public URL"
-echo "Next: mise run setup-git-sync"
 '''
-
-[tasks.setup-git-sync]
-description = "Configure Git Sync using a GitHub App"
-run = "bash scripts/setup-git-sync.sh"
 
 [tasks.setup-users]
 description = "Create or update the users and organization roles in users.json"
 run = '''
-if [ -f ../.env ]; then
-  set -a
-  source ../.env
-  set +a
-fi
 python3 scripts/setup-users.py
+'''
+
+[tasks.setup-resources]
+description = "Setting up Git Sync resources"
+run = '''
+tmpfileconn=$(mktemp)-connection.yaml
+tmpfilerepo=$(mktemp)-repo.yaml
+trap 'rm -f "$tmpfileconn"' EXIT
+trap 'rm -f "$tmpfilerepo"' EXIT
+envsubst < connection.yaml > "$tmpfileconn"
+envsubst < repository.yaml > "$tmpfilerepo"
+gcx --context=localhost resources push -v -p $tmpfileconn
+gcx --context=localhost resources push -v -p $tmpfilerepo
 '''
 
 [tasks.stop]
@@ -44,26 +50,20 @@ run = "docker compose --env-file ../.env restart"
 
 [tasks.logs]
 description = "Show logs (follow mode)"
-run = "docker compose --env-file ../.env logs -f"
+run = "docker compose logs -f"
 
 [tasks.logs-grafana]
 description = "Show Grafana logs only"
-run = "docker compose --env-file ../.env logs -f grafana"
+run = "docker compose logs -f grafana"
 
 [tasks.logs-ngrok]
 description = "Show ngrok logs"
-run = "docker compose --env-file ../.env logs ngrok"
+run = "docker compose logs ngrok"
 
 [tasks.ngrok-url]
-description = "Get the public ngrok URL"
+description = "Print the configured public ngrok URL"
 run = '''
-logs=$(docker compose --env-file ../.env logs --no-color ngrok)
-url=$(printf '%s\n' "$logs" | sed -n 's/.*url=\(https:\/\/[^"[:space:]]*\).*/\1/p' | tail -n 1)
-if [ -n "$url" ]; then
-  printf 'Ngrok public URL: %s\n' "$url"
-else
-  echo "Ngrok not ready yet; try again in a few seconds."
-fi
+printf 'Ngrok public URL: %s\n' "${NGROK_SUBDOMAIN:?Set NGROK_SUBDOMAIN in the root .env}"
 '''
 
 [tasks.open]

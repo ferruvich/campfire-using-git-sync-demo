@@ -6,10 +6,10 @@ metadata:
 spec:
   title: GitHub App
   type: github
-  url: https://github.com
   github:
     appID: '${GITHUB_APP_ID}'
     installationID: '${GITHUB_APP_INSTALLATION_ID}'
+  description: My App
 secure:
   privateKey:
     create: |

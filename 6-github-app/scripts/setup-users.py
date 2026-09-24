@@ -80,7 +80,7 @@ class Grafana:
     def request(self, method, path, body=None, expected_message=None):
         command = [
             self.executable, "api", path,
-            "--config={}".format(SCENARIO_DIR / "gcx.yaml"), "--context=default",
+            "--config={}".format(SCENARIO_DIR / "gcx.yaml"),
             "--output=json", "--agent=false", "--log-http-payload=false",
             "--method", method,
         ]
