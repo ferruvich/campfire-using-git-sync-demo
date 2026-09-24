@@ -1,0 +1,110 @@
+# Tasks use the gcx installation already available on PATH.
+
+[settings]
+unix_default_inline_shell_args = "bash -e -u -o pipefail -c"
+
+[tasks.help]
+description = "Show available tasks"
+run = "mise tasks ls"
+
+[tasks.start]
+description = "Start all services"
+run = '''
+echo "Starting 6-github-app..."
+docker compose --env-file ../.env up -d --remove-orphans
+sleep 5
+echo ""
+echo "Grafana: http://localhost:3000 (admin / admin)"
+echo "Ngrok: run 'mise run ngrok-url' to get the public URL"
+echo "Next: mise run setup-git-sync"
+'''
+
+[tasks.setup-git-sync]
+description = "Configure Git Sync using a GitHub App"
+run = "bash scripts/setup-git-sync.sh"
+
+[tasks.setup-users]
+description = "Create or update the users and organization roles in users.json"
+run = '''
+if [ -f ../.env ]; then
+  set -a
+  source ../.env
+  set +a
+fi
+python3 scripts/setup-users.py
+'''
+
+[tasks.stop]
+description = "Stop all services"
+run = "docker compose --env-file ../.env down"
+
+[tasks.restart]
+description = "Restart all services"
+run = "docker compose --env-file ../.env restart"
+
+[tasks.logs]
+description = "Show logs (follow mode)"
+run = "docker compose --env-file ../.env logs -f"
+
+[tasks.logs-grafana]
+description = "Show Grafana logs only"
+run = "docker compose --env-file ../.env logs -f grafana"
+
+[tasks.logs-ngrok]
+description = "Show ngrok logs"
+run = "docker compose --env-file ../.env logs ngrok"
+
+[tasks.ngrok-url]
+description = "Get the public ngrok URL"
+run = '''
+logs=$(docker compose --env-file ../.env logs --no-color ngrok)
+url=$(printf '%s\n' "$logs" | sed -n 's/.*url=\(https:\/\/[^"[:space:]]*\).*/\1/p' | tail -n 1)
+if [ -n "$url" ]; then
+  printf 'Ngrok public URL: %s\n' "$url"
+else
+  echo "Ngrok not ready yet; try again in a few seconds."
+fi
+'''
+
+[tasks.open]
+description = "Open Grafana in the browser"
+run = '''
+open http://localhost:3000 2>/dev/null || xdg-open http://localhost:3000 2>/dev/null || echo "Please open http://localhost:3000 in your browser"
+'''
+
+[tasks.open-ngrok]
+description = "Open the ngrok dashboard"
+run = '''
+open https://dashboard.ngrok.com/endpoints 2>/dev/null || xdg-open https://dashboard.ngrok.com/endpoints 2>/dev/null || echo "Please open https://dashboard.ngrok.com/endpoints in your browser"
+'''
+
+[tasks.open-all]
+description = "Open Grafana and the ngrok dashboard"
+depends = ["open", "open-ngrok"]
+
+[tasks.health]
+description = "Check Grafana and ngrok health"
+run = '''
+healthy=true
+if response=$(curl --fail --silent --show-error --max-time 5 http://localhost:3000/api/health) && printf '%s\n' "$response" | grep -E '"database"[[:space:]]*:[[:space:]]*"ok"' >/dev/null; then
+  echo "Grafana: healthy"
+else
+  echo "Grafana: not responding or unhealthy"
+  healthy=false
+fi
+if logs=$(docker compose --env-file ../.env logs --no-color ngrok) && printf '%s\n' "$logs" | grep 'started tunnel' >/dev/null; then
+  echo "Ngrok tunnel: started (see logs for current connection status)"
+else
+  echo "Ngrok tunnel: no startup message found"
+  healthy=false
+fi
+[ "$healthy" = true ]
+'''
+
+[tasks.clean]
+description = "Remove this scenario's Git Sync resources, containers, and volumes"
+run = "bash scripts/clean.sh"
+
+[tasks.status]
+description = "Show service status"
+run = "docker compose --env-file ../.env ps"

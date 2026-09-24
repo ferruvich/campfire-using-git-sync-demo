@@ -1,0 +1,16 @@
+[
+  {
+    "login": "editor",
+    "name": "Editor",
+    "email": "editor@example.com",
+    "role": "Editor",
+    "password_env": "GRAFANA_EDITOR_PASSWORD"
+  },
+  {
+    "login": "viewer",
+    "name": "Viewer",
+    "email": "viewer@example.com",
+    "role": "Viewer",
+    "password_env": "GRAFANA_VIEWER_PASSWORD"
+  }
+]

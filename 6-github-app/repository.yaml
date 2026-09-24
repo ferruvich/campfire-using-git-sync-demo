@@ -1,0 +1,22 @@
+# Rendered by scripts/setup-git-sync.sh before being sent to Grafana.
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: git-sync-github-app
+spec:
+  title: Git Sync GitHub App
+  type: github
+  github:
+    url: '${GITHUB_REPO_YAML}'
+    branch: '${GITHUB_BRANCH_YAML}'
+    path: 6-github-app/grafana/
+    generateDashboardPreviews: false
+  connection:
+    name: github-app
+  sync:
+    enabled: true
+    intervalSeconds: 60
+    target: folder
+  workflows:
+    - write
+    - branch

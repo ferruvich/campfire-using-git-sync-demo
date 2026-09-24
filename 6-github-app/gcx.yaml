@@ -1,0 +1,13 @@
+# Client credentials for the existing Grafana account; this file does not create users.
+# Admin email: daniele.ferru@grafana.com, initialized by GF_SECURITY_ADMIN_EMAIL
+# in docker-compose.yml. See README.md#admin-account-and-email for existing accounts.
+# Additional users are defined in users.json and applied with 'mise run setup-users'.
+contexts:
+  default:
+    grafana:
+      server: http://localhost:3000
+      auth-method: basic
+      user: admin
+      password: admin
+      org-id: 1
+current-context: default

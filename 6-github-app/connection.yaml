@@ -1,0 +1,16 @@
+# Rendered by scripts/setup-git-sync.sh before being sent to Grafana.
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: github-app
+spec:
+  title: GitHub App
+  type: github
+  url: https://github.com
+  github:
+    appID: '${GITHUB_APP_ID}'
+    installationID: '${GITHUB_APP_INSTALLATION_ID}'
+secure:
+  privateKey:
+    create: |
+      ${GITHUB_APP_PRIVATE_KEY}
