@@ -18,7 +18,7 @@ graph LR
 
 Browse the dashboard JSON definitions by folder.
 
-### Applications
+### [Applications](applications/)
 
 - [API Performance](applications/api-performance.json)
 - [Application Logs](applications/application-logs.json)
@@ -26,14 +26,14 @@ Browse the dashboard JSON definitions by folder.
 - [Service Health](applications/service-health.json)
 - [Web Analytics](applications/web-analytics.json)
 
-### Business
+### [Business](business/)
 
 - [KPI Overview](business/kpi-overview.json)
 - [Revenue Metrics](business/revenue-metrics.json)
 - [Sales Pipeline](business/sales-pipeline.json)
 - [User Engagement](business/user-engagement.json)
 
-### Infrastructure
+### [Infrastructure](infrastructure/)
 
 - [Cloud Resources](infrastructure/cloud-resources.json)
 - [Docker Containers](infrastructure/docker-containers.json)
@@ -41,7 +41,7 @@ Browse the dashboard JSON definitions by folder.
 - [Load Balancers](infrastructure/load-balancers.json)
 - [Networking](infrastructure/networking.json)
 
-### Security
+### [Security](security/)
 
 - [Access Control & Authentication](security/access-control.json)
 - [New dashboard](security/new-dashboard.json)
