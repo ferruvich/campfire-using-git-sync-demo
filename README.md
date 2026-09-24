@@ -48,7 +48,7 @@ Single Grafana instance with multiple Git Sync repositories for different teams.
 
 ### Scenario 6: GitHub App with mise and gcx
 
-Single Grafana instance with ngrok, GitHub App authentication, mise tasks, and your existing gcx installation, using the same dashboards as Scenario 1. Dashboard image previews are disabled.
+Single Grafana instance with ngrok, GitHub App authentication, mise tasks, and your existing gcx installation, with 17 dashboards across applications, business, infrastructure, and security. Dashboard image previews are disabled.
 
 [→ Scenario 6 Guide](6-github-app/README.md)
 

@@ -1,6 +1,6 @@
 # Scenario 6: GitHub App with mise and gcx
 
-Single Grafana instance with Git Sync authenticated through a GitHub App. This scenario runs Grafana and ngrok with the same 22 dashboards as [Scenario 1](../1-single/README.md), using mise tasks and your existing gcx installation.
+Single Grafana instance with Git Sync authenticated through a GitHub App. This scenario runs Grafana and ngrok with 17 dashboards across applications, business, infrastructure, and security, using mise tasks and your existing gcx installation.
 
 ## Architecture
 
@@ -168,7 +168,7 @@ gcx --config=gcx.yaml --context=default resources get dashboards
 
 In Grafana, open **Administration → Provisioning → Git Sync** to inspect connection and synchronization status. Dashboards are imported from `6-github-app/grafana/` into a folder named **Git Sync GitHub App**, with a 60-second sync interval.
 
-Each dashboard folder (`applications`, `business`, `infrastructure`, `monitoring`, and `security`) includes a [`_folder.json` manifest](https://grafana.com/docs/grafana-cloud/learn-and-build/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file). Its `metadata.name` stores a stable folder UID, and `spec.title` supplies the display name in Grafana. Keep the UID unchanged when moving or renaming a folder; move its manifest along with its dashboards.
+Each dashboard folder (`applications`, `business`, `infrastructure`, and `security`) includes a [`_folder.json` manifest](https://grafana.com/docs/grafana-cloud/learn-and-build/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file). Its `metadata.name` stores a stable folder UID, and `spec.title` supplies the display name in Grafana. Keep the UID unchanged when moving or renaming a folder; move its manifest along with its dashboards.
 
 The included UIDs are for a new setup. If these folders have already been synced without metadata, set each manifest's `metadata.name` to that folder's existing UID from its Grafana URL before syncing these files. This preserves the existing folder identity and permissions. Commit and push the manifests to the configured branch so Git Sync can read them.
 
