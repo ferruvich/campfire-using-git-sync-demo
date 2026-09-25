@@ -1,43 +1,28 @@
-# GitHub App dashboards
+# Applications
 
-The 18 dashboards in this directory are organized into Applications and Infrastructure, with nine dashboards in each folder. They are synchronized by [Scenario 6](../README.md), using a GitHub App, mise, and gcx.
-
-## Architecture
-
-```mermaid
-graph LR
-    User[User] --> Grafana[Grafana Instance]
-    Grafana <--> |Git Sync via GitHub App| GitHub[GitHub Repository]
-    Ngrok[ngrok Tunnel] --> Grafana
-
-    style Grafana fill:#f96332
-    style GitHub fill:#333
-```
+This folder contains 9 dashboard definitions for application monitoring, user analytics, and business metrics. Scenario 6 synchronizes them into **Git Sync GitHub App → Applications** in Grafana.
 
 ## Dashboards
 
-Browse the dashboard JSON definitions by folder.
+Each link opens the dashboard's JSON definition.
 
-### Applications
+| Dashboard | Contents |
+| --- | --- |
+| [API Performance](api-performance.json) | Response times, request and error rates, HTTP status codes, and total requests. |
+| [Application Logs](application-logs.json) | Log volume by level and service, error and warning trends, and common error types. |
+| [Database Metrics](database-metrics.json) | Query duration, database connections, transaction rates, slow queries, and cache hit rate. |
+| [KPI Overview](kpi-overview.json) | Revenue and customer acquisition targets, monthly recurring revenue, customer satisfaction, and financial trends. |
+| [Revenue Metrics](revenue-metrics.json) | Daily revenue and transactions, average order value, conversion rate, and revenue trends. |
+| [Sales Pipeline](sales-pipeline.json) | Leads, qualified opportunities, win rate, pipeline value, funnel conversion, and closed deals. |
+| [Service Health](service-health.json) | Service uptime, health checks, dependency status, overall health, and active incidents. |
+| [User Engagement](user-engagement.json) | Daily and monthly active users, retention, new signups, user growth, and feature usage. |
+| [Web Analytics](web-analytics.json) | Active users, page views, bounce rate, session duration, and top pages. |
 
-- [API Performance](api-performance.json)
-- [Application Logs](../applications/application-logs.json)
-- [Database Metrics](../applications/database-metrics.json)
-- [KPI Overview](applications/kpi-overview.json)
-- [Revenue Metrics](applications/revenue-metrics.json)
-- [Sales Pipeline](applications/sales-pipeline.json)
-- [Service Health](applications/service-health.json)
-- [User Engagement](applications/user-engagement.json)
-- [Web Analytics](applications/web-analytics.json)
+## Supporting files
 
-### [Infrastructure](../infrastructure/)
+- [`_folder.json`](_folder.json) defines the **Applications** folder title and stable UID (`github-app-applications`). Keep `metadata.name` unchanged to preserve the folder's identity.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) contains dashboard contribution and verification guidance and serves as an example Markdown tab in Grafana.
 
-- [Access Control & Authentication](../infrastructure/access-control.json)
-- [Cloud Resources](infrastructure/cloud-resources.json)
-- [Docker Containers](infrastructure/docker-containers.json)
-- [Kubernetes Cluster](infrastructure/kubernetes-cluster.json)
-- [Load Balancers](infrastructure/load-balancers.json)
-- [Networking](infrastructure/networking.json)
-- [New dashboard](infrastructure/new-dashboard.json)
-- [Security Overview](infrastructure/security-overview.json)
-- [Vulnerability Scan & Compliance](infrastructure/vulnerability-scan.json)
+## Navigation
+
+[Dashboard catalog](../README.md) · [Infrastructure](../infrastructure/README.md) · [Scenario 6 setup guide](../../README.md)
