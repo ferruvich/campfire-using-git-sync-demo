@@ -1,0 +1,40 @@
+services:
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-github-app
+    command: http --url=${NGROK_SUBDOMAIN} grafana:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    networks:
+      - grafana-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:nightly
+    pull_policy: always
+    container_name: grafana-github-app
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=provisioning,kubernetesDashboards
+      - GF_PROVISIONING_PUBLIC_ROOT_URL=${NGROK_SUBDOMAIN}
+      # Used when Grafana creates the initial admin account.
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_EMAIL=daniele.ferru@grafana.com
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_PROVISIONING_ALLOWED_TARGETS=folder|folderless
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ngrok
+    networks:
+      - grafana-net
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+
+networks:
+  grafana-net:
+    driver: bridge

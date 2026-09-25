@@ -1,18 +1,18 @@
 # Grafana Git Sync Demo Repository
 
-> **Last Updated:** November 28, 2025
+> **Last Updated:** September 25, 2026
 >
-> **Purpose:** This repository provides practical demonstrations of Grafana's Git Sync feature through five real-world scenarios. It's designed to help DevOps engineers, SREs, and Grafana users learn how to implement bidirectional synchronization between Grafana dashboards and Git repositories.
+> **Purpose:** This repository provides practical demonstrations of Grafana's Git Sync feature through six real-world scenarios. It's designed to help DevOps engineers, SREs, and Grafana users learn how to implement bidirectional synchronization between Grafana dashboards and Git repositories.
 
 ## ⚠️ Important Disclaimers
 
-- **Experimental Feature**: Git Sync is currently in an experimental phase and may have limitations or breaking changes. While it represents Grafana's first step toward comprehensive Observability as Code, **we don't recommend using it in production or critical environments**.
+- **Demo Configurations**: Scenarios 1–5 retain their original experimental Git Sync configuration from November 2025. These demos use moving container tags and default credentials; **we don't recommend using them in production or critical environments**.
 
-- **Evolving Documentation**: This documentation reflects the state of Git Sync as of November 2025. As this feature is actively evolving, some instructions may become outdated. Please refer to the [official Grafana Git Sync documentation](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/intro-git-sync/) for the latest information.
+- **Evolving Documentation**: Scenarios 1–5 retain their November 2025 setup instructions. Scenario 6 adds GitHub App authentication with mise and gcx. Please refer to the [official Grafana Git Sync documentation](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/) for the latest information.
 
 ## Overview
 
-Demonstration of Grafana's Git Sync feature with five practical scenarios covering common deployment patterns.
+Demonstration of Grafana's Git Sync feature with six practical scenarios covering common deployment patterns.
 
 ## Scenarios
 
@@ -46,14 +46,23 @@ Single Grafana instance with multiple Git Sync repositories for different teams.
 
 [→ Scenario 5 Guide](5-multi-team/README.md)
 
+### Scenario 6: GitHub App with mise and gcx
+
+Single Grafana instance with ngrok, GitHub App authentication, mise tasks, and your existing gcx installation, with 18 dashboards across applications, business, infrastructure, and security. Dashboard image previews are disabled.
+
+[→ Scenario 6 Guide](6-github-app/README.md)
+
 ## Prerequisites
 
 - Docker & Docker Compose
 - Ngrok account with static subdomain ([ngrok.com](https://ngrok.com))
-- GitHub account with Personal Access Token (scopes: repo, pull_requests, webhooks)
-- grafanactl CLI ([installation instructions](https://grafana.github.io/grafanactl/))
+- GitHub account and a repository containing the scenario you want to sync
+- **Scenarios 1–5:** GitHub Personal Access Token (scopes: repo, pull_requests, webhooks) and [grafanactl](https://grafana.github.io/grafanactl/)
+- **Scenario 6:** [mise](https://mise.jdx.dev/getting-started.html), gcx installed on your PATH, the Docker Compose plugin, Bash, curl, envsubst, and a GitHub App installed on your repository. See the [scenario prerequisites](6-github-app/README.md#prerequisites).
 
 ## Quick Start
+
+The Make and grafanactl commands below apply to **scenarios 1–5**. For scenario 6, follow the [GitHub App setup and mise quick start](6-github-app/README.md).
 
 ### 1. Fork this Repository
 
@@ -67,11 +76,14 @@ cp .env.example .env
 ```
 
 Edit `.env` and configure:
+
 - `NGROK_AUTHTOKEN`: Your ngrok auth token
 - `NGROK_SUBDOMAIN`: Your static ngrok subdomain (e.g., `https://your-subdomain.ngrok-free.app`)
-- `GITHUB_PAT`: Your GitHub Personal Access Token
-- `GITHUB_REPO`: Your forked repository (e.g., `yourusername/campfire-using-git-sync-demo`)
+- `GITHUB_PAT`: Your GitHub Personal Access Token (scenarios 1–5)
+- `GITHUB_REPO`: Your forked repository's full URL (e.g., `https://github.com/yourusername/campfire-using-git-sync-demo`)
 - `GITHUB_BRANCH`: Branch to sync (usually `main`)
+
+Scenario 6 also uses `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, and `GITHUB_APP_PRIVATE_KEY` (the base64-encoded PEM contents). Store these in the root, gitignored `.env`, which mise loads for its tasks. See [Configure the environment](6-github-app/README.md#configure-the-environment) for key preparation. Scenario 6 does not require `GITHUB_PAT`.
 
 ### 3. Choose and Start a Scenario
 
@@ -108,7 +120,7 @@ Access Grafana at `http://localhost:3000` (or the appropriate port) and login wi
 
 ## Makefile Commands
 
-All scenarios include a Makefile with helpful commands:
+Scenarios 1–5 include a Makefile with helpful commands:
 
 ```bash
 make help          # Show all available commands
@@ -120,6 +132,8 @@ make health        # Check service health
 make stop          # Stop services
 make clean         # Remove all containers and volumes
 ```
+
+Scenario 6 uses `mise run start`, followed by `mise run setup-resources` once Grafana is healthy. `setup-resources` renders the Connection and Repository templates with `envsubst` and pushes them with gcx. `mise run ngrok-url` prints the configured `NGROK_SUBDOMAIN`; `mise run setup-users` manages the demo editor and viewer accounts (requires Python 3). See its [task reference](6-github-app/README.md#tasks), including `mise run clean` for teardown.
 
 ## Git Sync Workflow
 
@@ -155,7 +169,7 @@ make clean         # Remove all containers and volumes
 
 ## Using grafanactl
 
-Each scenario includes a `grafanactl.yaml` configuration file for CLI management. To use grafanactl:
+Scenarios 1–5 include a `grafanactl.yaml` configuration file for CLI management. Scenario 6 uses gcx; see [Configure gcx contexts](6-github-app/README.md#configure-gcx-contexts) for the configuration used by each task and [Inspect Git Sync](6-github-app/README.md#inspect-git-sync) for commands. To use grafanactl:
 
 ### Installation
 
@@ -194,6 +208,8 @@ grafanactl --config=grafanactl.yaml resources get dashboard/<name>
 - **Scenario 5**: `default` (single instance with multiple repositories)
 
 ## Troubleshooting
+
+The Make and grafanactl guidance here applies to scenarios 1–5. For scenario 6, use its [troubleshooting guide](6-github-app/README.md#troubleshooting).
 
 ### Ngrok Issues
 
