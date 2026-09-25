@@ -1,6 +1,6 @@
 # Scenario 6: GitHub App with mise and gcx
 
-Single Grafana instance with Git Sync authenticated through a GitHub App. This scenario runs Grafana 13.2 and ngrok with 18 dashboards across applications, business, infrastructure, and security, using mise tasks and your existing gcx installation.
+Single Grafana instance with Git Sync authenticated through a GitHub App. This scenario runs Grafana 13.2 and ngrok with 18 dashboards across applications and infrastructure, with nine dashboards in each folder, using mise tasks and your existing gcx installation.
 
 Browse the [dashboard catalog](grafana/README.md) for the architecture diagram and links to every dashboard and its JSON definition.
 
@@ -198,7 +198,7 @@ gcx --context=localhost resources get dashboards
 
 In Grafana, open **Administration → Provisioning → Git Sync** to inspect connection and synchronization status. Dashboards are imported from `6-github-app/grafana/` into a folder named **Git Sync GitHub App**, with a 60-second sync interval.
 
-Each dashboard folder (`applications`, `business`, `infrastructure`, and `security`) includes a [`_folder.json` manifest](https://grafana.com/docs/grafana-cloud/learn-and-build/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file). Its `metadata.name` stores a stable folder UID, and `spec.title` supplies the display name in Grafana. Keep the UID unchanged when moving or renaming a folder; move its manifest along with its dashboards.
+Each dashboard folder (`applications` and `infrastructure`) includes a [`_folder.json` manifest](https://grafana.com/docs/grafana-cloud/learn-and-build/as-code/observability-as-code/git-sync/use-git-sync/#the-git-sync-folder-metadata-file). Its `metadata.name` stores a stable folder UID, and `spec.title` supplies the display name in Grafana. Keep the UID unchanged when moving or renaming a whole folder, and move its manifest with it. When consolidating dashboards into an existing folder, retain the destination manifest and remove the emptied source folder and its manifest. This consolidation retains the Applications and Infrastructure manifests and their existing UIDs.
 
 The included UIDs are for a new setup. If these folders have already been synced without metadata, set each manifest's `metadata.name` to that folder's existing UID from its Grafana URL before syncing these files. This preserves the existing folder identity and permissions. Commit and push the manifests to the configured branch so Git Sync can read them.
 
